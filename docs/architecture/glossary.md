@@ -32,3 +32,7 @@ This glossary maps all technical terminology, framework tools, and mineral math 
 | Metals-API | The external third-party pricing provider integration used by the value calculation engine to pull live reference spot copper feeds. |
 | Ruff | The automated code-quality scanning linter and formatting checker utilized inside the development workflow. |
 | Figma | The UX/UI prototyping workspace tool used to design frontend interface components and match screens to backend APIs. |
+| LME (London Metal Exchange) | The global benchmark market for non-ferrous industrial metals, particularly copper cathode. |
+| LME-XCU | London Metal Exchange copper symbol used for Grade A Copper Cathode pricing. |
+| TOTP (Time-based One-Time Password) | Time-based authentication code used for MFA. |
+| UUID (Universally Unique Identifier) | Unique identifier used as primary keys for entities. |

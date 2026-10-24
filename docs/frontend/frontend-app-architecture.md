@@ -1,4 +1,4 @@
-# Heliks Frontend - Detailed Technical Documentation
+# Heliks Frontend Documentation
 
 ## 1. Overview
 

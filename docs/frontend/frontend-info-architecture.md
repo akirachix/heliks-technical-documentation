@@ -1,8 +1,8 @@
-# RICA Informational Website — Technical Documentation
+# RICA Informational Website Documentation
 
 ## 1. Overview
 
-The RICA informational website is the public-facing site for Heliks, presenting RICA — a mineral value-chain intelligence platform that helps mining companies track mineral batches, uncover value losses, and capture more value from Zambia's copper. 
+The RICA informational website is the public-facing site for Heliks, presenting RICA - a mineral value-chain intelligence platform that helps mining companies track mineral batches, uncover value losses, and capture more value from Zambia's copper. 
 
 It is separate from any authenticated administrative dashboard or backend console.
 

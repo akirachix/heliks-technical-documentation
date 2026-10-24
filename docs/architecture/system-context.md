@@ -120,8 +120,6 @@ The RICA platform is organized around several functional modules.
 | QR Codes | Generates and provides QR codes for batch traceability |
 | Scenarios | Provides what-if analysis and scenario planning |
 | Audit Logging | Tracks and logs critical system actions |
-| Notifications & Alerts | Provides relevant system notifications |
-
 ## 5. Client-to-API Communication
 
 The web dashboard communicates with the backend through HTTP API requests.

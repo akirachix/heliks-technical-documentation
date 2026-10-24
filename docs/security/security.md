@@ -1,248 +1,319 @@
-# Security Technical
+# Security
 
-# Security Technical Documentation
+This page explains how security works in the RICA backend. It covers login, passwords, roles, MFA, password reset, rate limiting, audit logging and startup checks.
 
-## Overview
 
-RICA implements layered security controls covering authentication, authorization, session/token management, input validation, auditability, and secure configuration to protect user accounts, sensitive data, API endpoints, and administrative functionality.
+## Summary
 
-## Authentication
+| Control | What it does | Where in the code |
+| --- | --- | --- |
+| Login with JWT | Checks email and password, then returns a signed access token | `routers/auth.py`, `services/user_service.py`, `core/auth.py` |
+| Logout | Revokes the token by saving its ID (`jti`) in a blacklist | `services/user_service.py`, `core/auth.py` |
+| Password hashing | Salted SHA-256 | `services/user_service.py` |
+| Roles | Three roles with helper checks for each | `dependencies/rbac.py` |
+| Account status | A `DISABLED` account cannot log in or use a token | `services/user_service.py`, `core/auth.py` |
+| MFA | Time-based one-time codes (TOTP), secret stored encrypted | `routers/mfa.py`, `services/mfa_service.py` |
+| Password reset | One-time reset link, token stored as a hash, valid for 1 hour | `routers/password_reset.py`, `services/password_reset_service.py` |
+| Login rate limit | 5 attempts per 15 minutes per IP address | `middleware/rate_limit.py` |
+| Audit logging | One database row for every request | `middleware/audit.py`, `models/audit_log.py` |
+| Startup checks | The app refuses to start with weak or missing secrets | `core/config.py` |
 
-- **JWT Access Tokens**: Issued on login via `POST /auth/login`. Signed with `HS256` using `JWT_SECRET` (min 32 characters). Default expiry `ACCESS_TOKEN_EXPIRE_MINUTES=15`. Payload includes `user_id`, `email`, `role`, `jti`, `exp`.
-- **Token Blacklisting**: `core/auth.py` maintains a blacklist for revoked tokens (used on logout). Tokens are checked against the blacklist on authenticated requests.
-- **Password Hashing**: Passwords hashed as `salt$sha256(salt + password)`. Salt is 16 random bytes hex-encoded. Verification splits on `$` and compares digests.
-- **Login Protection**: Rate limiting and lockout via `login_max_attempts` (5), `login_window_seconds` (900), `lockout_duration_seconds` (900). `redis_url` required in production for distributed rate limiting.
-- **MFA (TOTP)**: Optional/enabled via `mfa_required`. MFA secrets encrypted with Fernet using `MFA_ENCRYPTION_KEY`. Endpoints under `POST /auth/mfa/*` (setup, verify, disable, login). Models: `MFAToken`.
-- **OTP Verification**: One-Time Password (OTP) verification provides an additional identity verification mechanism.
-- **Password Reset**: Token-based password reset flow (`POST /auth/forgot-password`, `POST /auth/reset-password`). Tokens tracked in `PasswordResetToken`.
+---
 
-## Authorization
+## 1. Authentication
 
-- **Role-Based Access Control (RBAC)**: Roles `SYSTEM_ADMINISTRATOR`, `SUPPLY_CHAIN_MANAGER`, `OPERATIONS_MANAGER`. Enforced via dependencies (`core/auth.py`, `dependencies/rbac.py`).
-- **Value Calculations**: Restricted to `SUPPLY_CHAIN_MANAGER` via `ValueCalculationService.require_supply_chain_manager()` (401 if unauthenticated, 403 if wrong role).
-- **Company Scoping**: 
-  - `GET /mineral-batches` filters by `current_user.company_name` joined through batch creator
-  - `_check_company_access()` blocks cross-company access to batches with 403
-  - Users with `company_name = NULL` see all batches (fallback for legacy/admin use)
-- **Least Privilege**: Users and system components receive only the permissions required for their intended tasks.
-- **IDOR Protection**: Insecure Direct Object Reference (IDOR) vulnerabilities are mitigated by checking whether the authenticated user is authorized to access the requested resource. Users cannot access another user's private information by manipulating IDs.
-- **Endpoint Protection**: Sensitive operations require `get_current_user` dependency.
+### Login flow
 
-## Input Validation & Data Integrity
+1. The client sends `POST /auth/login` with `email` and `password`.
+2. The service looks up the user by email and checks the password.
+3. If the email or the password is wrong, it returns `401` with one message for both cases: `Invalid email or password`. This does not tell an attacker which part was wrong.
+4. If the account status is `DISABLED`, it returns `401` with `Account is disabled`.
+5. Otherwise it creates a JWT and returns it.
 
-- **Pydantic Schemas**: All request/response bodies validated via Pydantic v2 schemas
-- **Database Constraints**: 
-  - Copper-only batches (`ck_batches_mineral_copper`)
-  - Range checks: `quantity_tonnes >= 0`, `grade` 0–1, `recovery` 0–1 (nullable)
-  - Stage/recovery constraints on `batch_history`
-  - Unique constraints on emails, batch codes, stage names/orders
-- **Value Calculation Guards**: Validates quantity/grade/recovery ranges, requires quantity and grade, rejects invalid values with 422
-
-## Secure Configuration
-
-- **Secrets Management**: All secrets via environment variables; never committed to source control
-- **Settings Validation**:
-  - `JWT_SECRET` >= 32 characters
-  - `MFA_ENCRYPTION_KEY` must be valid Fernet key
-  - Production requires `REDIS_URL`
-  - Production requires non-localhost `FRONTEND_URL`
-- **Test Isolation**: `TESTING=1` forces SQLite in-memory database
-- **CORS**: Configured via `CORS_ORIGINS` (comma-separated), defaults to `http://localhost:3000`. Middleware allows credentials and specific headers/methods
-- **Proxy Headers**: `TRUST_PROXY_HEADERS` configurable for deployments behind proxies
-
-## Logging & Auditing
-
-- **Audit Logging**: `AuditLog` model and `middleware/audit.py` track actions
-- **Error Handling**: Centralized exception handlers (`core/exceptions.py`)
-- **Logging**: Application logging via Python `logging` (no secrets logged)
-
-## Network & Transport
-
-- **HTTPS**: Required in production (Heroku terminates TLS)
-- **CORS Policy**: Restrictive origin allowlist
-- **Rate Limiting**: Applied to auth endpoints to mitigate brute force (15-minute window)
-- **Health Endpoint**: `GET /health` public for uptime checks
-
-## Secure Coding Practices
-
-- **Password Storage**: Never store plaintext passwords. Passwords are hashed using `salt$sha256(salt + password)`.
-- **SQL Injection**: Prevented by SQLAlchemy ORM parameterized queries
-- **Dependency Pinning**: Managed via `pyproject.toml`
-- **Secret Rotation**: Rotate `JWT_SECRET`, `MFA_ENCRYPTION_KEY` if compromised
-- **Least Privilege**: Role checks on sensitive operations
-- **Error Messages**: Generic auth errors to avoid user enumeration where appropriate
-
-## Data Protection
-
-- **Sensitive Data Protection**: Sensitive information such as maternal health information, user credentials, authentication information, and private user data are protected.
-- **Encryption in Transit**: Information is encrypted while being transferred between the client, API, and backend.
-- **Encryption at Rest**: Sensitive information is protected while stored. Passwords use hashing rather than reversible encryption.
-- **Secrets Management**: Sensitive credentials and secrets are stored in environment configuration and should not be committed to the repository.
-
-## Administrative Access
-
-Administrative functionality is restricted to authorized System Administrator accounts.
-
-Administrators can:
-
-- Manage users
-- Manage companies
-- Manage maternal health content and tips
-- View platform growth and engagement metrics
-- Monitor safety alerts
-- Manage administrator account settings
-- Access audit logs
-
-## OWASP Top 10 Considerations
-
-| Risk | Mitigation |
-|---|---|
-| A01: Broken Access Control | RBAC, company scoping, IDOR protection, least privilege, route guards |
-| A02: Cryptographic Failures | Password hashing (salt$sha256), Fernet encryption for MFA secrets, HTTPS in transit |
-| A03: Injection | Pydantic validation, SQLAlchemy ORM parameterized queries |
-| A04: Insecure Design | Layered architecture, secure defaults, audit logging |
-| A05: Security Misconfiguration | Environment-based config, CORS restrictions, secure headers |
-| A06: Vulnerable Components | Dependency management, regular updates |
-| A07: Authentication Failures | JWT with blacklisting, MFA/TOTP, rate limiting, strong password policies |
-| A08: Software/Data Integrity Failures | Input validation, audit trail, secure CI/CD |
-| A09: Security Logging/Monitoring | Comprehensive audit logging with user, IP, and action tracking |
-| A10: Server-Side Request Forgery | Input validation, restricted external API calls with proper configuration |
-
-## Security Architecture
-
-```
-Authentication
-     │
-     ├── JWT Tokens
-     ├── OTP Verification
-     └── MFA (TOTP)
-     │
-     ▼
-Authorization
-     │
-     ├── Role-Based Access Control (RBAC)
-     ├── Least Privilege
-     └── IDOR Protection
-     │
-     ▼
-API Protection
-     │
-     ├── Rate Limiting (15-minute window)
-     └── Protected Endpoints
-     │
-     ▼
-Data Protection
-     │
-     ├── Sensitive Data Protection
-     ├── Encryption in Transit & At Rest
-     └── Password Hashing (salt$sha256)
-     │
-     ▼
-RICA Backend (FastAPI)
-     │
-     ▼
-PostgreSQL Database
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "YourPassword"}'
 ```
 
-## Incident Response Notes
+```json
+{ "access_token": "<jwt>", "token_type": "bearer" }
+```
 
-- Revoke tokens via blacklist on logout
-- Disable accounts via `account_status`
-- Use password reset flow for credential recovery
-- Review audit logs for suspicious activity
-- Rotate compromised secrets immediately
+### The token
 
-## Compliance Considerations
+| Claim | Meaning |
+| --- | --- |
+| `user_id` | ID of the user |
+| `email` | Email of the user |
+| `role` | One of the three roles |
+| `jti` | Unique ID of this token, used for logout |
+| `exp` | Expiry time |
 
-- Store minimal PII (name, email, company)
-- Encrypt MFA secrets at rest (Fernet)
-- Use secure defaults in production configuration validation
-- Audit trail for sensitive operations
-- Implement data protection controls for sensitive information
+- Algorithm: `HS256` (setting `JWT_ALGORITHM`).
+- Lifetime: 15 minutes by default (setting `ACCESS_TOKEN_EXPIRE_MINUTES`).
+- Signed with `JWT_SECRET`, which must be at least 32 characters.
 
+### Sending the token
 
----
+Protected endpoints need this header:
 
-# Threat Model
+```text
+Authorization: Bearer <access_token>
+```
 
-# Threat Mitigation Model
+### What happens on every protected request
 
-This documentation tracks critical application threat vectors and outlines the software controls built into the codebase to secure them.
+`get_current_user` in `core/auth.py` runs these checks in order:
 
-## Operational Threat Vector Mitigations
+1. The `Authorization` header must be present.
+2. The token must have a valid signature and must not be expired.
+3. The token's `jti` must not be in the blacklist.
+4. The user must exist.
+5. The account status must not be `DISABLED`.
 
-### 1. Privilege Escalation & Cross-Tenant Data Leaks
-* **Vulnerability Sensitivity Tier:** ️ **HIGH**
-* **Target Vulnerability Component:** Authorization services, endpoint routers, backend database drivers.
-* **Code Implementation Control:**
+| Status | Message | When |
+| --- | --- | --- |
+| `401` | `Missing or invalid authorization header` | No bearer token |
+| `401` | `Token has expired` | Token past its `exp` |
+| `401` | `Invalid token` | Bad signature or broken token |
+| `401` | `Token has been revoked` | Token was logged out |
+| `401` | `Account is disabled` | Account status is `DISABLED` |
 
-    !!! info "Compound Parameter Authorization Checks"
-        System access scopes are evaluated through a multi-dimensional criteria check, rather than role attributes alone:
-        $$\text{Authorization Verification} = \text{User} + \text{Role} + \text{Company} + \text{Site} + \text{Resource}$$
-        Any ambiguous authorization decisions must fail closed, denying access and returning a `403 Forbidden` response.
+### Logout
 
-### 2. Unauthorized Data Alterations & Audit Trails Erasure
-* **Vulnerability Sensitivity Tier:**  **CRITICAL**
-* **Target Vulnerability Component:** Batch registry logs, transaction ledgers, database storage permissions.
-* **Code Implementation Control:**
-    * Software routing blocks intercept and drop direct `DELETE` or `UPDATE` queries targeting timeline history tables.
-    * Corrections must be processed on an **append-only model** by inserting a new event log that captures the `previous_state`, `new_state`, `user_id`, `timestamp`, and an explicit `reason` string.
-
-### 3. Automated Account Enumeration & Brute-Force Probing
-* **Vulnerability Sensitivity Tier:** ️ **HIGH**
-* **Target Vulnerability Component:** User login, password recovery services.
-* **Code Implementation Control:**
-    * Background rate-limiting middleware limits request frequencies on sensitive authentication entry points.
-    * Authentication failure handlers return a single generic error message to fully hide whether the email or password parameter was invalid.
-
+`POST /auth/logout` reads the token, takes its `jti` and `exp`, and saves the `jti` in the blacklist until the token's own expiry time. After that, every request with this token returns `401 Token has been revoked`. Expired entries are removed from the blacklist automatically.
 
 ---
 
-# Compliance Audit
+## 2. Password storage
 
-# Statutory Compliance & Audit Policies
+Passwords are never stored in plain text. The stored value in `users.password_hash` has this format:
 
-##  Zambian Data Protection Act (2021) Alignment
-RICA implements specific backend storage rules to comply with **Zambia's Data Protection Act of 2021** regarding the processing, isolation boundaries, and long-term archiving of customer data records.
+```text
+<salt>$<sha256(salt + password)>
+```
 
-### Enforced Compliance Invariants:
-* **Statutory Archiving Window:** All active tracking ledgers and administrative logs are kept for a **minimum mandatory retention threshold of 1 year** before entering archival storage routines.
-* **Anonymization Invariants:** When custom profiles are deactivated or users execute their legal right to data erasure, all personal identifiers are thoroughly anonymized. The transactional asset tracking loops remain intact to prevent structural dependency breaks.
-* **Geographic Data Sovereignty Constraints:** Database clusters and cloud computing boundaries run within geographical parameters that comply with regional cloud data privacy guidelines.
-
-##  Permanent System Log Capture Events
-RICA middleware automatically captures these operational modifications, recording them to an unalterable auditing stream containing user metadata, timestamp parameters, resource hashes, and source IP headers:
-
-### Access & Security Audits
-* Elevation of workspace permissions, custom rule modifications, or security group resets.
-* User status adjustments (e.g., locking an account into a `DISABLED` state).
-
-### Inventory & Value Audits
-* Initialization of a new mineral batch record.
-* Stage transition event triggers.
-* Adjustments to financial baseline snapshots or passport data extractions.
-
+- The salt is 16 random bytes (32 hex characters), created for each password with `os.urandom`.
+- Two users with the same password get different hashes.
+- `verify_password` splits the stored value at `$`, hashes the typed password with the same salt, and compares the result.
+- `password_changed_at` records when the password was last reset.
 
 ---
 
-# Data Classification
+## 3. Roles and access control
 
-# Sensitive Data Classification Registry
+### Roles
 
-This central registry profiles all data assets processed by the platform, detailing their structural importance, encryption baselines, and retention constraints.
+| Role | Meaning |
+| --- | --- |
+| `SYSTEM_ADMINISTRATOR` | Full access, manages users |
+| `SUPPLY_CHAIN_MANAGER` | Value calculations and supply chain data |
+| `OPERATIONS_MANAGER` | Operations data; default role for a new user |
 
-## Information Asset Security Mapping
+### Role checks
 
-| Information Asset Target | Sensitivity Tier | In-Transit Encryption | At-Rest Security Controls | Storage Engine Location |
-| :--- | :--- | :--- | :--- | :--- |
-| **System Signing Keys & Master Variables** <br>*(PostgreSQL access strings, JWT secret tokens)* |  **CRITICAL** | Encrypted via TLS 1.3 loops | Abstracted out of the codebase entirely. Injected as runtime environment variables. | Host Runtime Memory Cache |
-| **User Access Credentials** <br>*(Active login pass strings, session tokens, reset hashes)* |  **HIGH** | Encrypted via TLS 1.3 loops | Hashed using secure cryptographic algorithms. Excluded from all system logs. | PostgreSQL (`users`) Table |
-| **Mineral Batch Specifications** <br>*(Mass weights, laboratory assay inputs, moisture balances)* |  **HIGH** | Encrypted via TLS 1.3 loops | Isolated behind multi-tenant row security filters. Append-only change logging. | PostgreSQL (`mineral_batches`) Table |
-| **Traceability & Timeline Ledgers** <br>*(Custody transition records, processing timelines)* |  **HIGH** | Encrypted via TLS 1.3 loops | Blocked database write operations (no `UPDATE`/`DELETE` authority). | PostgreSQL (`batch_history`) Table |
-| **System Event Audit Logs** <br>*(Administrative records, transaction tracking records)* |  **HIGH** | Encrypted via TLS 1.3 loops | Permanent read-only rows. 1-year statutory archiving window. | PostgreSQL (`audit_events`) Table |
-| **User Identity Profiles** <br>*(Real names, employee emails, authorization roles)* |  **MEDIUM** | Encrypted via TLS 1.3 loops | Restricted visibility. Data fields are masked during export loops. | PostgreSQL (`users`) Table |
-| **Market Reference Data** <br>*(LME pricing logs, fetch date parameters)* |  **MEDIUM** | Encrypted via TLS 1.3 loops | Read-only cache layers flagged with temporal provenance stamps. | PostgreSQL (`market_feeds`) Table |
+`dependencies/rbac.py` has three ready-made checks. Each one returns `403` when the role is not allowed.
 
+| Check | Allowed roles | `403` message |
+| --- | --- | --- |
+| `require_admin` | `SYSTEM_ADMINISTRATOR` | `Admin access required` |
+| `require_supply_chain_manager` | `SYSTEM_ADMINISTRATOR`, `SUPPLY_CHAIN_MANAGER` | `Supply chain manager access required` |
+| `require_operations_manager` | All three roles | `Operations manager access required` |
+
+Higher roles can do everything a lower role can do.
+
+### Where access is enforced today
+
+| Area | How |
+| --- | --- |
+| Value calculation | The service allows only `SUPPLY_CHAIN_MANAGER` (`403 Only supply chain managers can access value calculations`). It also blocks access to a batch created by a user from a different company (`403 Cannot access batches from a different company`). |
+| Mineral batch list | `GET /mineral-batches` returns only batches from the logged-in user's `company_name` |
+| Other endpoints | Require a valid login (`get_current_user`) |
+
+### Account status
+
+`users.account_status` is `ACTIVE` or `DISABLED`. A user is disabled with `PATCH /users/{user_id}/disable` or `DELETE /users/{user_id}`. Users are disabled, not removed, so their history stays in the database.
 
 ---
 
+## 4. Multi-factor authentication (MFA)
+
+MFA uses time-based one-time codes (TOTP), the kind used by Google Authenticator and similar apps.
+
+### Endpoints
+
+| Endpoint | Needs login | Purpose |
+| --- | --- | --- |
+| `POST /auth/mfa/setup` | Yes | Start MFA setup |
+| `POST /auth/mfa/verify` | Yes | Confirm setup with a code |
+| `POST /auth/mfa/disable` | Yes | Turn MFA off with a code |
+| `POST /auth/mfa/login` | No | Log in with email, password and code |
+
+### Setup
+
+1. The user calls `POST /auth/mfa/setup`. If MFA is already on, it returns `400 MFA is already enabled`.
+2. The server creates a random TOTP secret and encrypts it with Fernet using `MFA_ENCRYPTION_KEY`.
+3. It saves a setup token (64 hex characters, valid for 10 minutes) with the encrypted secret in `mfa_tokens`.
+4. It returns the `secret`, a QR code as a `qr_code_url` image (issuer name `RICA`) and the setup `token`, and it also emails the setup code.
+5. The user scans the QR code, then calls `POST /auth/mfa/verify` with the setup `token` and a 6-digit `code`.
+6. If the token is valid, not expired and not used, and the code is correct, the server marks the token as used. It then sets `mfa_enabled = true` and stores the encrypted secret in `users.mfa_secret_encrypted`.
+
+Codes are accepted within 2 time steps before or after the current one (about 60 seconds either side).
+
+### Login with MFA
+
+`POST /auth/mfa/login` takes `email`, `password` and `code`. It checks the password in the same way as normal login, then checks that MFA is on and that the code is correct. It returns an access token.
+
+| Message | When |
+| --- | --- |
+| `MFA is not enabled for this user` | The user has not set up MFA |
+| `Invalid MFA code` | The code is wrong |
+
+### Turning MFA off
+
+`POST /auth/mfa/disable` needs a correct current code. It clears `mfa_enabled` and removes the stored secret.
+
+---
+
+## 5. Password reset
+
+### Forgot password
+
+`POST /auth/forgot-password` takes an `email`.
+
+- It always returns the message `If the email exists, a reset link has been sent`, so the message does not show whether the email is registered.
+- For a registered email, it creates a random token (32 bytes), saves only its SHA-256 hash in `password_reset_tokens`, sets the expiry to 1 hour, and emails the link `FRONTEND_URL/reset-password?token=...`.
+
+### Reset password
+
+`POST /auth/reset-password` takes the `token` and a `new_password` (at least 8 characters).
+
+| Message | When |
+| --- | --- |
+| `Invalid or expired reset token` | The token hash is not found |
+| `Reset token has expired` | More than 1 hour has passed |
+| `Reset token has already been used` | The token was used before |
+| `Password has been reset successfully` | Success |
+
+On success, the token is marked as used, the new password is hashed with a new salt, and `password_changed_at` is updated. Each token works only once.
+
+---
+
+## 6. Login rate limiting
+
+A middleware limits attempts on `POST /auth/login`.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `LOGIN_MAX_ATTEMPTS` | `5` | Attempts allowed in one window |
+| `LOGIN_WINDOW_SECONDS` | `900` | Window length (15 minutes) |
+
+- The counter is kept per client IP address.
+- After 5 attempts in 15 minutes, the next request returns `429` with `Too many login attempts. Please try again later.`
+- Old attempts drop out of the window as time passes.
+- The limiter is switched off when `TESTING=1`.
+
+---
+
+## 7. Audit logging
+
+A middleware writes one row to the `audit_logs` table for every request, after the response is ready.
+
+| Column | Value |
+| --- | --- |
+| `audit_id` | Unique ID |
+| `user_id` | The user from the bearer token, or empty if there is no valid token |
+| `action` | Method and path, for example `POST /auth/login` |
+| `resource` | Request path |
+| `ip_address` | Client IP address |
+| `user_agent` | Browser or client name |
+| `timestamp` | Time in UTC |
+
+- Request bodies and query strings are not stored, so passwords and tokens do not end up in the log.
+- If writing the log fails, the error is ignored and the request still succeeds.
+- If a user is deleted from the database, `user_id` in their old rows is set to empty.
+- The audit log is switched off when `TESTING=1`.
+
+---
+
+## 8. Startup configuration checks
+
+The settings are checked when the app starts. If a rule fails, the app does not start.
+
+| Rule | Setting |
+| --- | --- |
+| At least 32 characters | `JWT_SECRET` |
+| Must be a valid Fernet key | `MFA_ENCRYPTION_KEY` |
+| Must be set in production | `REDIS_URL` |
+| Must not be `http://localhost:3000` in production | `FRONTEND_URL` |
+| Must be a valid comma-separated list | `CORS_ORIGINS` |
+
+### Environment variables for security
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `JWT_SECRET` | Yes | At least 32 characters |
+| `MFA_ENCRYPTION_KEY` | Yes | Generate with `Fernet.generate_key()` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Default `15` |
+| `LOGIN_MAX_ATTEMPTS` | No | Default `5` |
+| `LOGIN_WINDOW_SECONDS` | No | Default `900` |
+| `ENVIRONMENT` | No | `development` or `production` |
+| `REDIS_URL` | Production | Checked at startup |
+| `FRONTEND_URL` | Production | Used in the reset link |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | For email | Used for MFA setup and password reset emails |
+
+---
+
+## 9. CORS
+
+Only the origins in `CORS_ORIGINS` can call the API from a browser.
+
+- Allowed methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`
+- Allowed headers: `Authorization`, `Content-Type`, `Accept`, `Origin`
+- Credentials are allowed.
+
+---
+
+## 10. Error handling
+
+Business errors use small classes in `core/exceptions.py`. Each class has a status code, and a handler turns it into a JSON response: `{"detail": "..."}`.
+
+| Class | Status |
+| --- | --- |
+| `AppError` | `400` |
+| `NotFoundError` | `404` |
+| `ConflictError` | `409` |
+| `BusinessRuleError` | `422` |
+| `InvalidCredentialsError` | `401` |
+| `AccountDisabledError` | `401` |
+
+---
+
+## 11. Security data model
+
+| Table | Security columns |
+| --- | --- |
+| `users` | `password_hash`, `password_changed_at`, `mfa_enabled`, `mfa_secret_encrypted`, `role`, `account_status`, `company_name` |
+| `mfa_tokens` | `token`, `user_id`, `secret_encrypted`, `purpose` (`setup` or `verify`), `expires_at`, `used` |
+| `password_reset_tokens` | `token_hash`, `user_id`, `purpose`, `expires_at`, `used` |
+| `audit_logs` | `user_id`, `action`, `resource`, `ip_address`, `user_agent`, `timestamp` |
+
+`mfa_tokens` and `password_reset_tokens` rows are deleted when the user is deleted.
+
+---
+
+## 12. Endpoint reference
+
+| Method | Path | Login needed | Success | Main errors |
+| --- | --- | --- | --- | --- |
+| `POST` | `/auth/login` | No | `200` with token | `401`, `429` |
+| `POST` | `/auth/logout` | Token | `200` | `401` |
+| `POST` | `/auth/forgot-password` | No | `200` | |
+| `POST` | `/auth/reset-password` | No | `200` | `400`, `422` |
+| `POST` | `/auth/mfa/setup` | Yes | `200` | `400`, `401` |
+| `POST` | `/auth/mfa/verify` | Yes | `200` | `400`, `401` |
+| `POST` | `/auth/mfa/disable` | Yes | `200` | `400`, `401` |
+| `POST` | `/auth/mfa/login` | No | `200` with token | `400`, `401` |
+
+---

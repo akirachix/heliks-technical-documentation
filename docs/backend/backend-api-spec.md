@@ -1,4 +1,4 @@
-# RICA Backend Technical Documentation
+# RICA Backend Documentation
 
 ## 1. Overview
 
