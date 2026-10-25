@@ -1,33 +1,71 @@
-site_name: Heliks Technical Documentation
-site_description: Technical documentation for the Heliks project
-site_url: ""
-repo_name: heliks-technical-documentation
-edit_uri: https://github.com/akirachix/heliks-technical-documentation/edit/main/docs/
-
+site_name: "TECHNICAL DOCUMENTATION"
 theme:
   name: material
-  language: en
+  logo: assets/images/Rica.png
+  favicon: assets/images/Rica.png
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Poppins
+    code: JetBrains Mono
   features:
     - navigation.tabs
     - navigation.sections
     - navigation.top
-    - navigation.indexes
     - search.suggest
     - search.highlight
     - content.code.copy
+
+
+
+
+
+
+
+
+
+
+site_url: https://heliks-rica.net
+site_description: Centralized engineering documentation workspace for the RICA mineral tracking ecosystem.
+repo_name: heliks-technical-documentation
+edit_uri: https://github.com/akirachix/heliks-technical-documentation/edit/main/docs/
+
+
+
+
+
+theme:
+  name: material
+  logo: assets/images/Rica.png
+  language: en
   palette:
-    - scheme: default
-      primary: indigo
-      accent: blue
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: teal
       toggle:
-        icon: material/brightness-7
+        icon: material/weather-night
         name: Switch to dark mode
-    - scheme: slate
-      primary: indigo
-      accent: blue
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: teal
       toggle:
-        icon: material/brightness-4
+        icon: material/weather-sunny
         name: Switch to light mode
+
+  features:
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+
 
 plugins:
   - search
@@ -40,28 +78,33 @@ markdown_extensions:
       permalink: true
   - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 
 extra_css:
   - stylesheets/extra.css
 
 nav:
   - Home: index.md
-  - Start Here:
-      - Overview: start-here/index.md
-      - Documentation Guide: start-here/documentation-guide.md
-  - Architecture:
-      - Overview: architecture/index.md
-      - System Context: architecture/system-context.md
+  - Overview: architecture/system-context.md
+  - Informational Website: frontend/frontend-info-architecture.md
+  - Architecture: architecture/architecture-overview.md
   - Backend:
-      - Overview: backend/index.md
-  - Frontend:
-      - Overview: frontend/index.md
-  - Platform:
-      - Overview: platform/index.md
-  - Security:
-      - Overview: security/index.md
-  - Developer Guide:
-      - Overview: developer-guide/index.md
-      - Setup: developer-guide/setup.md
-  - Reference:
-      - Overview: reference/index.md
+      - API Specification: backend/backend-api-spec.md
+      - Integrations: backend/integrations-spec.md
+      - Testing & API Docs: backend/testing-and-api-docs.md
+  - Database: architecture/database-schemas.md
+  - Frontend: frontend/frontend-app-architecture.md
+  - Design: design/wireframes.md
+  - Development:
+      - Backend Setup: developer-guide/backend-setup.md
+      - Frontend App Setup: developer-guide/frontend-app-setup.md
+      - Frontend Info Setup: developer-guide/frontend-info-setup.md
+      - Database & Migrations: developer-guide/database-migrations.md
+  - Security: security/security.md
+  - Development:
+      - Backend Setup: developer-guide/backend-setup.md
+      - Frontend App Setup: developer-guide/frontend-app-setup.md
+      - Frontend Info Setup: developer-guide/frontend-info-setup.md
+      - Database & Migrations: developer-guide/database-migrations.md
+  - Glossary: architecture/glossary.md
