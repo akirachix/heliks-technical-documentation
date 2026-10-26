@@ -49,7 +49,7 @@ The backend handles:
 - Database operations
 - Security and request handling
 
-The backend communicates with PostgreSQL for persistent data storage. Detailed backend structure and API functionality are documented in [Backend API Specifications](../backend/backend-api-spec.md).
+The backend communicates with PostgreSQL for persistent data storage. Detailed backend structure and API functionality are documented in [Backend](../backend/backend.md).
 
 ### 1.3 PostgreSQL Database
 RICA uses PostgreSQL for persistent data storage.
@@ -66,7 +66,7 @@ The database contains information used by the platform, including:
 - Audit logs
 - MFA/TOTP data
 
-The backend is responsible for database access. The web dashboard does not access PostgreSQL directly. More information is available in [Database Schemas](database-schemas.md).
+The backend is responsible for database access. The web dashboard does not access PostgreSQL directly. More information is available in [Database](database.md).
 
 ### 1.4 Informational Website
 The RICA informational website is the public-facing website for the project.
@@ -117,7 +117,7 @@ Repository / Database
 PostgreSQL
 ```
 
-This structure keeps the API routes separate from the application logic and database access. The backend also contains shared functionality for configuration, security, authentication, audit logging, and dependencies. The complete backend structure is documented in [Backend API Specifications](../backend/backend-api-spec.md).
+This structure keeps the API routes separate from the application logic and database access. The backend also contains shared functionality for configuration, security, authentication, audit logging, and dependencies. The complete backend structure is documented in [Backend](../backend/backend.md).
 
 ## Dashboard API Integration
 
@@ -131,7 +131,7 @@ The RICA web dashboard communicates with the RICA backend through the API. The A
 - Audit logs
 - Account settings
 
-The dashboard does not access the database directly. Further details are available in [Frontend App Architecture](../frontend/frontend-app-architecture.md).
+The dashboard does not access the database directly. Further details are available in [Frontend](../frontend/frontend.md).
 
 ## User Data Flow
 

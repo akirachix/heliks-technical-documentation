@@ -1,20 +1,5 @@
-# Frontend
-The frontend is built with **TypeScript** and modern web technologies.
 
-### Technology Stack
-
-| Item | Choice |
-| --- | --- |
-| Framework | Next.js 16 (App Router), React 19 |
-| Language | TypeScript |
-| Styling | Plain CSS: one .css file per component, no inline styles, no Tailwind |
-| Maps | MapLibre GL JS |
-| Quality | ESLint, Prettier, Husky and lint-staged on every commit |
-
-
-## App Architecture
-
-# Heliks Frontend Documentation
+# Rica Frontend Documentation
 
 ## 1. Overview
 
@@ -62,7 +47,14 @@ The application manages the complete mineral supply chain workflow including:
 
 ## 2. Technology Stack
 
-### Core Framework
+### Technology
+| Item | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19 |
+| Language | TypeScript |
+| Styling | Plain CSS: one .css file per component, no inline styles, no Tailwind |
+| Maps | MapLibre GL JS |
+| Quality | ESLint, Prettier, Husky and lint-staged on every commit |
 
 | Technology | Version | Purpose |
 |---|---|---|
@@ -827,3 +819,107 @@ The frontend applications are deployed to **Vercel**.
 5. Environment variables configured in Vercel dashboard
 
 **Note:** The **Informational Website** is a separate frontend application deployed on Vercel, while the **Main Frontend App** is the product application. Both are tested with Playwright and Cypress.
+
+
+## Code Quality & Pre-commit Hooks (Husky, lint-staged & Prettier)
+
+To maintain consistent code quality and formatting across the frontend/dashboard repository, pre-commit checks are set up using [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged).
+
+### 1. Install the tools
+
+Run the following from the frontend project's root directory:
+
+```bash
+npm install --save-dev husky lint-staged prettier
+npx husky init
+```
+
+Husky creates `.husky/pre-commit` and adds `"prepare": "husky"` to `package.json`.
+
+### 2. Configure `package.json`
+
+Merge these settings into the existing `package.json`, preserving other scripts and dependencies.
+
+```json
+{
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint",
+      "prettier --check"
+    ],
+    "*.{css,scss,json,md,mdx,yml,yaml,html}": [
+      "prettier --check"
+    ]
+  }
+}
+```
+
+### 3. Configure the pre-commit hook
+
+Replace the contents of `.husky/pre-commit` with:
+
+```bash
+npx lint-staged
+```
+
+This ensures only staged files are checked before committing.
+
+### 4. Ignore generated files
+
+Create a `.prettierignore` file in the root of the frontend project with the following:
+
+```text
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+package-lock.json
+```
+
+### 5. Check and commit the setup
+
+After configuring everything:
+
+```bash
+npm run format
+npm run lint
+git add package.json package-lock.json .husky .prettierignore
+git commit -m "Set up pre-commit lint and formatting checks"
+```
+
+Review and stage any formatting changes introduced by `npm run format` before committing.
+
+### When a commit fails
+
+If the pre-commit hook fails due to linting or formatting issues:
+
+1. Read the errors from the terminal.
+2. Fix lint issues as indicated.
+3. For formatting issues, run:
+
+```bash
+npm run format
+```
+
+4. Stage the corrected files and retry the commit.
+
+### Notes
+
+- **For all teammates:** Run `npm install` after pulling this setup so Husky installs the Git hooks locally.
+- **Bypass caution:** Pre-commit hooks can be bypassed, so CI must enforce these checks. Add the following to your CI pipeline:
+
+```bash
+npm run lint
+npm run format:check
+npm run build
+```
+
+**References:** [Husky Documentation](https://typicode.github.io/husky/) | [lint-staged Documentation](https://github.com/lint-staged/lint-staged)
