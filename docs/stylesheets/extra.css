@@ -235,10 +235,6 @@
   }
 }
 
-.md-header__title {
-  display: none !important;
-}
-
-.md-nav__title {
+.md-nav--primary > .md-nav__title {
   display: none !important;
 }
