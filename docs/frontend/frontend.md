@@ -1,3 +1,19 @@
+# Frontend
+The frontend is built with **TypeScript** and modern web technologies.
+
+### Technology Stack
+
+| Item | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19 |
+| Language | TypeScript |
+| Styling | Plain CSS: one .css file per component, no inline styles, no Tailwind |
+| Maps | MapLibre GL JS |
+| Quality | ESLint, Prettier, Husky and lint-staged on every commit |
+
+
+## App Architecture
+
 # Heliks Frontend Documentation
 
 ## 1. Overview
@@ -727,3 +743,75 @@ npm run dev
 **Document Version:** 1.0  
 **Last Updated:** October 2024  
 **Maintained By:** Heliks Development Team
+
+
+## Frontend Setup
+
+
+# Heliks Web Application Onboarding Guide
+
+Follow these steps to initialize your local development workspace for the multi-tenant React operations platform.
+
+##  System Prerequisites
+* **Node.js Environment:** Version `18.x` or `20.x` (LTS branches)
+* **Package Manager:** Standard `npm` framework
+
+##  Execution Onboarding Sequence
+
+### 1. Extract Dependencies
+Access the frontend directory containing `package.json` and initialize core node modules:
+```bash
+npm install
+```
+
+### 2. Configure Local Environment Variables
+Create a localized environment file named `.env.local` inside the frontend workspace root to map variables:
+```ini
+BACKEND_URL="http://127.0.0.1:8000"
+NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
+```
+
+### 3. Spin Up Local Development Runtime
+```bash
+npm run dev
+```
+
+
+## Testing
+The frontend was tested using E2E and component testing frameworks:
+
+### Playwright (E2E Testing)
+- **Purpose:** Test complete user flows from login to task completion
+- **Coverage:** Authentication, role-based access, batch management, value calculations
+- **Features:** Cross-browser testing, API mocking, screenshot comparisons, trace debugging
+- **Configuration:** `playwright.config.ts` with Chromium browser
+- **Test Location:** `tests/e2e/`
+
+### Cypress (Component & E2E Testing)
+- **Purpose:** Component testing and interactive end-to-end testing with real-time debugging
+- **Features:** Time-travel debugging, automatic waiting, network stubbing
+- **Use Case:** Testing individual components in isolation and complex user interactions
+- **Integration:** Works alongside Playwright for comprehensive test coverage
+
+Both testing frameworks ensure the application works correctly across different scenarios, user roles, and edge cases. The same testing approach applies to the **Informational Website** as well.
+
+## Deployment
+The frontend applications are deployed to **Vercel**.
+
+### Deployment Process
+1. Ensure all tests pass locally (Playwright/Cypress)
+2. Commit and push changes to the feature branch
+3. Create a Pull Request and get review from team members
+4. Merge to `main` branch after approval
+5. Vercel automatically deploys from the connected repository
+
+## Git Workflow & Collaboration
+1. **Start from main**: `git checkout main && git pull origin main`
+2. **Create feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make changes and test**: Implement, run tests locally
+4. **Stage and commit**: `git add . && git commit -m "descriptive message"`
+5. **Push**: `git push origin feature/your-feature-name`
+6. **Create PR**: Open Pull Request on GitHub targeting `main`
+7. **Review**: Team members review and provide feedback
+8. **Resolve conflicts**: If conflicts arise, `git pull origin main` into your branch, resolve conflicts, commit, push
+9. **Merge**: After approval, merge into `main`

@@ -25,21 +25,10 @@ theme:
 
 
 
-
-
-
-
-
-
-
 site_url: https://heliks-rica.net
 site_description: Centralized engineering documentation workspace for the RICA mineral tracking ecosystem.
 repo_name: heliks-technical-documentation
 edit_uri: https://github.com/akirachix/heliks-technical-documentation/edit/main/docs/
-
-
-
-
 
 theme:
   name: material
@@ -89,22 +78,9 @@ nav:
   - Overview: architecture/system-context.md
   - Informational Website: frontend/frontend-info-architecture.md
   - Architecture: architecture/architecture-overview.md
-  - Backend:
-      - API Specification: backend/backend-api-spec.md
-      - Integrations: backend/integrations-spec.md
-      - Testing & API Docs: backend/testing-and-api-docs.md
-  - Database: architecture/database-schemas.md
-  - Frontend: frontend/frontend-app-architecture.md
+  - Backend: backend/backend.md
+  - Database: architecture/database.md
+  - Frontend: frontend/frontend.md
   - Design: design/wireframes.md
-  - Development:
-      - Backend Setup: developer-guide/backend-setup.md
-      - Frontend App Setup: developer-guide/frontend-app-setup.md
-      - Frontend Info Setup: developer-guide/frontend-info-setup.md
-      - Database & Migrations: developer-guide/database-migrations.md
   - Security: security/security.md
-  - Development:
-      - Backend Setup: developer-guide/backend-setup.md
-      - Frontend App Setup: developer-guide/frontend-app-setup.md
-      - Frontend Info Setup: developer-guide/frontend-info-setup.md
-      - Database & Migrations: developer-guide/database-migrations.md
   - Glossary: architecture/glossary.md

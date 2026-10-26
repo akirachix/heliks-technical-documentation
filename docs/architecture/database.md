@@ -1,4 +1,5 @@
-# Database Schema Specifications
+
+# Database Entities Specifications
 
 This specification maps the production table structures, constraint targets, and column rules used by the data layer.
 
@@ -196,3 +197,74 @@ Stores rule-based decision support assessments for scenario results.
 | created_at | TIMESTAMP WITH TIME ZONE | NOT NULL | Default: NOW(). |
 | updated_at | TIMESTAMP WITH TIME ZONE | NOT NULL | Default: NOW(). Auto-updated on changes. |
 
+
+
+## Database Setup & Management
+- **Migration Tool:** Alembic is used for database schema migrations
+- **Database Type:** PostgreSQL
+- **Management Tool:** DBeaver (used for database inspection, querying, and management)
+- **Migrations:** Managed through Alembic in the backend project
+
+
+# Database Migrations & Data Seeding
+
+Database versions, migrations, and structural modifications are managed through **Alembic**.
+
+##  Executing Migration Routines
+
+To provision or upgrade your active local database layer schema to the latest configuration target, execute:
+
+```bash
+# Run every migration patch version straight to the head version
+alembic upgrade head
+```
+
+##  Provisioning Seed Data
+
+Your repository provides automated seeding options to populate your local database workspace with realistic data layers (including multi-tenant companies, matching user roles, copper batch entries, and historical processing stages):
+
+=== "Option A: Python Execution"
+    Run the standalone database seed pipeline script directly inside your active environment:
+    ```bash
+    # Seed users, batches, and timeline data
+    python scripts/seed_demo_data.py
+    ```
+
+=== "Option B: Direct SQL Injection"
+    Inject the raw transaction script directly into your target PostgreSQL instance container:
+    ```bash
+    # Feed SQL transactions straight to your database url destination
+    psql "$DATABASE_URL" -f scripts/seed_demo_data.sql
+    ```
+
+=== "Provisioning Admin Session Access"
+    The seed dataset purposefully excludes superuser credentials. Generate your localized administrator profile separately:
+    ```bash
+    # Inject initial system administrator account profile directly
+    python scripts/create_admin.py admin@example.com AdminPassword123!
+    ```
+
+
+## Database Usage
+- **Database Type:** PostgreSQL
+- **Management Tool:** DBeaver (used for database inspection, querying, and management)
+- **Migrations:** Managed through the backend migration system
+
+## Testing
+Database-related functionality is tested as part of the backend test suite using pytest.
+
+## Deployment
+The PostgreSQL database is hosted as part of the backend deployment on **Heroku** (Heroku Postgres addon).
+
+## Git Workflow & Collaboration
+1. **Start from main**: `git checkout main && git pull origin main`
+2. **Create feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make changes and test**: Update schemas/migrations, test locally
+4. **Stage and commit**: `git add . && git commit -m "descriptive message"`
+5. **Push**: `git push origin feature/your-feature-name`
+6. **Create PR**: Open Pull Request on GitHub targeting `main`
+7. **Review**: Team members review and provide feedback
+8. **Resolve conflicts**: Pull latest `main`, resolve conflicts, commit, push
+9. **Merge**: After approval, merge into `main`
+
+**Branch Strategy:** `main` (production) and `develop` branches are used. New features are developed in `feature/*` branches off `develop` or `main` as per workflow. Always pull before creating a new branch and resolve conflicts when they arise.
