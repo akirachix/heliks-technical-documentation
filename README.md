@@ -1,53 +1,91 @@
 # Heliks Technical Documentation
 
-This directory contains the central technical documentation for the **Rica** copper value-chain platform. It provides a system overview designed to help developers understand the architecture, configure local environments, and safely contribute code.
+This repository contains the technical documentation for the RICA (Resources and Inventory Control Application) mineral tracking ecosystem, built with [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).
 
-The documentation outlines the business rules, security models, and code standards applied across the backend API, frontend web, and mobile workflows.
+## Project Overview
 
----
+RICA is a mineral tracking and value calculation system designed to manage mineral batches, track their journey through processing stages, calculate recoverable values, and provide role-based access control for different stakeholders in the supply chain.
 
-## Documentation Map
+## Documentation Structure
 
-The system guides are split into separate modules for clean organization:
-
-- System Architecture: system interaction flow charts, data routing, and infrastructure maps.
-- Backend API: core logic configurations, routing mechanisms, and data schemas.
-- Frontend Web: layout maps and permission rules for administrative interfaces.
-- Platform: deployment and operational guidance.
-- Security: session constraints, rate-limiting guards, and access tiers.
-- Reference: glossary and supporting material.
-- Developer Guide: setup, standards, and contribution workflow.
-
----
-
-## Repository Structure
-
-The documentation folder sits at the root of the main platform workspace:
-
-```text
-docs/
-├── assets/
-│   └── images/
-├── stylesheets/
-│   └── extra.css
-├── architecture/
-│   ├── index.md
-│   └── system-context.md
-├── backend/
-│   └── index.md
-├── developer-guide/
-│   ├── index.md
-│   └── setup.md
-├── frontend/
-│   └── index.md
-├── platform/
-│   └── index.md
-├── reference/
-│   └── index.md
-├── security/
-│   └── index.md
-├── start-here/
-│   ├── index.md
-│   └── documentation-guide.md
-└── index.md
 ```
+heliks-technical-documentation/
+├── docs/
+│   ├── index.md                    # Home page
+│   ├── architecture/               # System architecture
+│   │   ├── system-context.md
+│   │   ├── architecture-overview.md
+│   │   └── database.md
+│   ├── backend/                    # Backend documentation
+│   │   └── backend.md
+│   ├── frontend/                   # Frontend documentation
+│   │   ├── frontend.md
+│   │   └── frontend-info-architecture.md
+│   ├── security/                   # Security documentation
+│   │   └── security.md
+│   ├── design/                     # Design documentation
+│   │   └── wireframes.md
+│   ├── stylesheets/                # Custom styling
+│   └── assets/                     # Images and assets
+├── mkdocs.yml                      # MkDocs configuration
+└── requirements.txt                # Python dependencies
+```
+
+## Getting Started
+
+### Prerequisites
+- Python 3.8+
+
+### Installation
+
+```bash
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Local Development
+
+```bash
+# Serve documentation locally
+mkdocs serve
+```
+
+The documentation will be available at `http://127.0.0.1:8000`
+
+### Build
+
+```bash
+# Build static site
+mkdocs build
+```
+
+## Deployment
+
+- **Backend**: Deployed on [Heroku](https://www.heroku.com/)
+- **Frontend**: Deployed on [Vercel](https://vercel.com/)
+- **Database**: PostgreSQL (managed via Heroku Postgres, inspected with DBeaver)
+
+## Testing
+
+- **Backend**: `pytest` for unit/integration tests, Swagger UI (`/docs`) for manual API testing, Postman for endpoint validation
+- **Frontend**: Playwright (E2E) and Cypress (component/E2E) testing
+- **Informational Website**: Tested using Playwright and Cypress
+
+## Git Workflow
+
+1. Pull latest from `main`: `git pull origin main`
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make changes, test locally
+4. Stage and commit: `git add . && git commit -m "descriptive message"`
+5. Push: `git push origin feature/your-feature-name`
+6. Open a Pull Request on GitHub targeting `main`
+7. Request review from team members and resolve conflicts if any
+8. Merge after approval
+
+## Contributing
+
+Follow the Git workflow above. All changes should go through pull requests with code review.
