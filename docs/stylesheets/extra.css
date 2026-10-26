@@ -234,3 +234,11 @@
     font-size: 0.8rem;
   }
 }
+
+.md-header__title {
+  display: none !important;
+}
+
+.md-nav__title {
+  display: none !important;
+}

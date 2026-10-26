@@ -1,4 +1,4 @@
-site_name: "TECHNICAL DOCUMENTATION"
+site_name: ""
 theme:
   name: material
   logo: assets/images/Rica.png
@@ -22,6 +22,7 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
+  custom_dir: overrides
 
 
 
