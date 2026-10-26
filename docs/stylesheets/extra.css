@@ -432,3 +432,84 @@ code, pre, kbd {
     background-color: rgba(12, 195, 155, 0.08) !important;
 }
 
+
+@media (max-width: 76.1875em) {
+  .md-header__title {
+    font-size: 0.85rem;
+  }
+  .md-header__title .md-header__topic {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 60em) {
+  .md-header__title {
+    font-size: 0.75rem;
+  }
+  .md-header__title .md-header__topic {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 44.9375em) {
+  .md-header__title {
+    font-size: 0.7rem;
+  }
+  .md-header__title .md-header__topic {
+    max-width: 100px;
+  }
+}
+
+@media screen and (max-width: 76.1875em) {
+  .md-sidebar--primary {
+    width: 12.1rem;
+  }
+}
+
+@media screen and (max-width: 60em) {
+  html {
+    font-size: 90%;
+  }
+  .md-content {
+    padding: 0 1rem;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .md-typeset table:not([class]) {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media screen and (max-width: 44.9375em) {
+  html {
+    font-size: 87.5%;
+  }
+  .md-header__inner {
+    padding: 0 0.4rem;
+  }
+  .md-content {
+    padding: 0 0.6rem;
+  }
+  .md-typeset h1 {
+    font-size: 1.8em;
+  }
+  .md-typeset h2 {
+    font-size: 1.5em;
+  }
+  .md-typeset h3 {
+    font-size: 1.3em;
+  }
+  table {
+    font-size: 0.8rem;
+  }
+  .md-footer__link {
+    font-size: 0.75rem;
+  }
+}
