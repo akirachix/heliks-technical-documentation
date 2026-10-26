@@ -471,3 +471,16 @@ The backend is deployed to **Heroku**.
 7. **Review**: Team members review and provide feedback
 8. **Resolve conflicts**: If conflicts arise, pull latest main, resolve, commit, push
 9. **Merge**: After approval, merge into `main`
+
+
+### Deployment Details
+**Platform:** Heroku  
+**Database:** Heroku Postgres  
+**Process:** 
+1. Ensure all tests pass (`pytest`)
+2. Push to feature branch, create PR, get review
+3. Merge to `main` after approval
+4. Heroku auto-deploys from `main` branch
+5. Database migrations run via Alembic on deployment
+
+**Environment Variables:** Configured in Heroku dashboard (JWT secrets, database URL, etc.)

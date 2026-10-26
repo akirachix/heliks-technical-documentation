@@ -815,3 +815,15 @@ The frontend applications are deployed to **Vercel**.
 7. **Review**: Team members review and provide feedback
 8. **Resolve conflicts**: If conflicts arise, `git pull origin main` into your branch, resolve conflicts, commit, push
 9. **Merge**: After approval, merge into `main`
+
+
+### Deployment Details
+**Platform:** Vercel  
+**Process:**
+1. Ensure all tests pass (Playwright/Cypress)
+2. Push to feature branch, create PR, get review
+3. Merge to `main` after approval
+4. Vercel auto-deploys from connected repository
+5. Environment variables configured in Vercel dashboard
+
+**Note:** The **Informational Website** is a separate frontend application deployed on Vercel, while the **Main Frontend App** is the product application. Both are tested with Playwright and Cypress.

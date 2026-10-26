@@ -89,3 +89,13 @@ mkdocs build
 ## Contributing
 
 Follow the Git workflow above. All changes should go through pull requests with code review.
+
+## Quick Links
+
+- [Home](docs/index.md) - Project overview
+- [Architecture](docs/architecture/architecture-overview.md) - System design
+- [Backend Documentation](docs/backend/backend.md) - API, setup, testing & deployment
+- [Frontend Documentation](docs/frontend/frontend.md) - App architecture, setup, testing & deployment
+- [Database](docs/architecture/database.md) - Schemas and migrations
+- [Security](docs/security/security.md) - Security features and controls
+- [Glossary](docs/architecture/glossary.md) - Key terms and definitions
