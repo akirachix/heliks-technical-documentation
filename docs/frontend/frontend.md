@@ -1,4 +1,5 @@
-# Heliks Frontend Documentation
+
+# Rica Frontend Documentation
 
 ## 1. Overview
 
@@ -46,7 +47,14 @@ The application manages the complete mineral supply chain workflow including:
 
 ## 2. Technology Stack
 
-### Core Framework
+### Technology
+| Item | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19 |
+| Language | TypeScript |
+| Styling | Plain CSS: one .css file per component, no inline styles, no Tailwind |
+| Maps | MapLibre GL JS |
+| Quality | ESLint, Prettier, Husky and lint-staged on every commit |
 
 | Technology | Version | Purpose |
 |---|---|---|
@@ -727,3 +735,191 @@ npm run dev
 **Document Version:** 1.0  
 **Last Updated:** October 2024  
 **Maintained By:** Heliks Development Team
+
+
+## Frontend Setup
+
+
+# Heliks Web Application Onboarding Guide
+
+Follow these steps to initialize your local development workspace for the multi-tenant React operations platform.
+
+##  System Prerequisites
+* **Node.js Environment:** Version `18.x` or `20.x` (LTS branches)
+* **Package Manager:** Standard `npm` framework
+
+##  Execution Onboarding Sequence
+
+### 1. Extract Dependencies
+Access the frontend directory containing `package.json` and initialize core node modules:
+```bash
+npm install
+```
+
+### 2. Configure Local Environment Variables
+Create a localized environment file named `.env.local` inside the frontend workspace root to map variables:
+```ini
+BACKEND_URL="http://127.0.0.1:8000"
+NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
+```
+
+### 3. Spin Up Local Development Runtime
+```bash
+npm run dev
+```
+
+
+## Testing
+The frontend was tested using E2E and component testing frameworks:
+
+### Playwright (E2E Testing)
+- **Purpose:** Test complete user flows from login to task completion
+- **Coverage:** Authentication, role-based access, batch management, value calculations
+- **Features:** Cross-browser testing, API mocking, screenshot comparisons, trace debugging
+- **Configuration:** `playwright.config.ts` with Chromium browser
+- **Test Location:** `tests/e2e/`
+
+### Cypress (Component & E2E Testing)
+- **Purpose:** Component testing and interactive end-to-end testing with real-time debugging
+- **Features:** Time-travel debugging, automatic waiting, network stubbing
+- **Use Case:** Testing individual components in isolation and complex user interactions
+- **Integration:** Works alongside Playwright for comprehensive test coverage
+
+Both testing frameworks ensure the application works correctly across different scenarios, user roles, and edge cases. The same testing approach applies to the **Informational Website** as well.
+
+## Deployment
+The frontend applications are deployed to **Vercel**.
+
+### Deployment Process
+1. Ensure all tests pass locally (Playwright/Cypress)
+2. Commit and push changes to the feature branch
+3. Create a Pull Request and get review from team members
+4. Merge to `main` branch after approval
+5. Vercel automatically deploys from the connected repository
+
+## Git Workflow & Collaboration
+1. **Start from main**: `git checkout main && git pull origin main`
+2. **Create feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make changes and test**: Implement, run tests locally
+4. **Stage and commit**: `git add . && git commit -m "descriptive message"`
+5. **Push**: `git push origin feature/your-feature-name`
+6. **Create PR**: Open Pull Request on GitHub targeting `main`
+7. **Review**: Team members review and provide feedback
+8. **Resolve conflicts**: If conflicts arise, `git pull origin main` into your branch, resolve conflicts, commit, push
+9. **Merge**: After approval, merge into `main`
+
+
+### Deployment Details
+**Platform:** Vercel  
+**Process:**
+1. Ensure all tests pass (Playwright/Cypress)
+2. Push to feature branch, create PR, get review
+3. Merge to `main` after approval
+4. Vercel auto-deploys from connected repository
+5. Environment variables configured in Vercel dashboard
+
+**Note:** The **Informational Website** is a separate frontend application deployed on Vercel, while the **Main Frontend App** is the product application. Both are tested with Playwright and Cypress.
+
+
+## Code Quality & Pre-commit Hooks (Husky, lint-staged & Prettier)
+
+To maintain consistent code quality and formatting across the frontend/dashboard repository, pre-commit checks are set up using [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged).
+
+### 1. Install the tools
+
+Run the following from the frontend project's root directory:
+
+```bash
+npm install --save-dev husky lint-staged prettier
+npx husky init
+```
+
+Husky creates `.husky/pre-commit` and adds `"prepare": "husky"` to `package.json`.
+
+### 2. Configure `package.json`
+
+Merge these settings into the existing `package.json`, preserving other scripts and dependencies.
+
+```json
+{
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint",
+      "prettier --check"
+    ],
+    "*.{css,scss,json,md,mdx,yml,yaml,html}": [
+      "prettier --check"
+    ]
+  }
+}
+```
+
+### 3. Configure the pre-commit hook
+
+Replace the contents of `.husky/pre-commit` with:
+
+```bash
+npx lint-staged
+```
+
+This ensures only staged files are checked before committing.
+
+### 4. Ignore generated files
+
+Create a `.prettierignore` file in the root of the frontend project with the following:
+
+```text
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+package-lock.json
+```
+
+### 5. Check and commit the setup
+
+After configuring everything:
+
+```bash
+npm run format
+npm run lint
+git add package.json package-lock.json .husky .prettierignore
+git commit -m "Set up pre-commit lint and formatting checks"
+```
+
+Review and stage any formatting changes introduced by `npm run format` before committing.
+
+### When a commit fails
+
+If the pre-commit hook fails due to linting or formatting issues:
+
+1. Read the errors from the terminal.
+2. Fix lint issues as indicated.
+3. For formatting issues, run:
+
+```bash
+npm run format
+```
+
+4. Stage the corrected files and retry the commit.
+
+### Notes
+
+- **For all teammates:** Run `npm install` after pulling this setup so Husky installs the Git hooks locally.
+- **Bypass caution:** Pre-commit hooks can be bypassed, so CI must enforce these checks. Add the following to your CI pipeline:
+
+```bash
+npm run lint
+npm run format:check
+npm run build
+```
+
+**References:** [Husky Documentation](https://typicode.github.io/husky/) | [lint-staged Documentation](https://github.com/lint-staged/lint-staged)
